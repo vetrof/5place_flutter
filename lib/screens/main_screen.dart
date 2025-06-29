@@ -26,29 +26,35 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        toolbarHeight: 80,
+        automaticallyImplyLeading: false,
+        title: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              AppConstants.appName,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
-                letterSpacing: 1.2,
-              ),
-            ),
-            SizedBox(width: 8),
             Icon(
               Icons.place,
               color: AppTheme.primaryColor,
-              size: 24,
+              size: 28,
+            ),
+            SizedBox(height: 4),
+            Text(
+              '5Place',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+                letterSpacing: -0.3,
+              ),
             ),
           ],
         ),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        shadowColor: Colors.black.withOpacity(0.1),
       ),
+
+
+
       body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

@@ -1,3 +1,4 @@
+import 'package:five_place_app/screens/places/place_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -32,14 +33,7 @@ class _PlacesListScreenState extends State<PlacesListScreen> {
     if (position != null) {
       setState(() {
         _currentPosition = position;
-        _markers.add(
-          Marker(
-            markerId: MarkerId('current_location'),
-            position: LatLng(position.latitude, position.longitude),
-            infoWindow: InfoWindow(title: 'Ваше местоположение'),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          ),
-        );
+        _addCurrentLocationMarker(position);
       });
 
       if (_mapController != null) {
@@ -55,66 +49,160 @@ class _PlacesListScreenState extends State<PlacesListScreen> {
     }
   }
 
+  void _addCurrentLocationMarker(Position position) {
+    _markers.add(
+      Marker(
+        markerId: MarkerId('current_location'),
+        position: LatLng(position.latitude, position.longitude),
+        infoWindow: InfoWindow(title: 'Ваше местоположение'),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+      ),
+    );
+  }
+
   Future<void> _loadPlaces() async {
     if (_currentPosition == null) return;
 
+    print('[DEBUG] Загружаем места...');
     final loadedPlaces = await PlacesApiService.getNearbyPlaces(
       _currentPosition!.latitude,
       _currentPosition!.longitude,
     );
 
+    print('[DEBUG] Загружено мест: ${loadedPlaces.length}');
+
     setState(() {
       places = loadedPlaces;
       isLoading = false;
     });
+
+    _addPlaceMarkers(loadedPlaces);
+    setState(() {});
+  }
+
+  void _addPlaceMarkers(List<Place> places) {
+    Set<Marker> newMarkers = {};
+
+    final currentLocationMarker = _markers
+        .where((marker) => marker.markerId.value == 'current_location')
+        .firstOrNull;
+    if (currentLocationMarker != null) {
+      newMarkers.add(currentLocationMarker);
+    }
+
+    for (Place place in places) {
+      print('[DEBUG] Добавляем маркер для места: ${place.name} (${place.lat}, ${place.lng})');
+      newMarkers.add(
+        Marker(
+          markerId: MarkerId('place_${place.id}'),
+          position: LatLng(place.lat, place.lng),
+          infoWindow: InfoWindow(
+            title: place.name,
+            snippet: place.desc,
+          ),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+          onTap: () {
+            _onMarkerTapped(place);
+          },
+        ),
+      );
+    }
+
+    _markers = newMarkers;
+    print('[DEBUG] Всего маркеров: ${_markers.length}');
+  }
+
+  void _onMarkerTapped(Place place) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Выбрано место: ${place.name}'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        GoogleMapWidget(
-          mapController: _mapController,
-          currentPosition: _currentPosition,
-          markers: _markers,
-          onMapCreated: (controller) {
-            setState(() {
-              _mapController = controller;
-            });
-          },
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: GoogleMapWidget(
+            mapController: _mapController,
+            currentPosition: _currentPosition,
+            markers: _markers,
+            onMapCreated: (controller) {
+              setState(() {
+                _mapController = controller;
+              });
+
+              if (_currentPosition != null) {
+                controller.animateCamera(
+                  CameraUpdate.newLatLngZoom(
+                    LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+                    14,
+                  ),
+                );
+              }
+            },
+          ),
         ),
-        _buildPlacesList(),
+        _buildPlacesSliverList(),
       ],
     );
   }
 
-  Widget _buildPlacesList() {
-    return Expanded(
-      child: Container(
-        color: AppTheme.backgroundColor,
-        child: isLoading
-            ? Center(
-          child: CircularProgressIndicator(
-            color: AppTheme.primaryColor,
-          ),
-        )
-            : places.isEmpty
-            ? Center(
-          child: Text(
-            'Места не найдены',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppTheme.textSecondary,
+  Widget _buildPlacesSliverList() {
+    if (isLoading) {
+      return SliverToBoxAdapter(
+        child: Container(
+          height: 200,
+          color: AppTheme.backgroundColor,
+          child: Center(
+            child: CircularProgressIndicator(
+              color: AppTheme.primaryColor,
             ),
           ),
-        )
-            : ListView.builder(
-          itemCount: places.length,
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          itemBuilder: (context, index) {
-            return PlaceCard(place: places[index]);
-          },
         ),
+      );
+    }
+
+    if (places.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Container(
+          height: 200,
+          color: AppTheme.backgroundColor,
+          child: Center(
+            child: Text(
+              'Места не найдены',
+              style: TextStyle(
+                fontSize: 16,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+            (context, index) {
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: PlaceCard(
+              place: places[index],
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PlaceDetailScreen(place: places[index]),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+        childCount: places.length,
       ),
     );
   }

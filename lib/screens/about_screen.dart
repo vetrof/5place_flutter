@@ -1,8 +1,67 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import '../theme/app_theme.dart';
 import '../utils/constants.dart';
 
-class AboutScreen extends StatelessWidget {
+class ApiInfo {
+  final String message;
+  final String version;
+  final String swagger;
+
+  ApiInfo({
+    required this.message,
+    required this.version,
+    required this.swagger,
+  });
+
+  factory ApiInfo.fromJson(Map<String, dynamic> json) {
+    return ApiInfo(
+      message: json['message'],
+      version: json['version'],
+      swagger: json['swagger'],
+    );
+  }
+}
+
+class AboutScreen extends StatefulWidget {
+  @override
+  State<AboutScreen> createState() => _AboutScreenState();
+}
+
+class _AboutScreenState extends State<AboutScreen> {
+  ApiInfo? _apiInfo;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchApiInfo();
+  }
+
+  Future<void> _fetchApiInfo() async {
+    try {
+      final response = await http.get(Uri.parse('${AppConstants.apiBaseUrl}/'));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _apiInfo = ApiInfo.fromJson(data);
+          _error = null;
+        });
+      } else {
+        setState(() {
+          _error = 'Ошибка сервера: ${response.statusCode}';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Ошибка запроса: $e';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,6 +85,8 @@ class AboutScreen extends StatelessWidget {
             _buildAppLogo(),
             SizedBox(height: 24),
             _buildAppInfo(),
+            SizedBox(height: 16),
+            _buildApiInfoBlock(),
             SizedBox(height: 32),
             _buildDescriptionCard(),
             SizedBox(height: 20),
@@ -35,6 +96,23 @@ class AboutScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildApiInfoBlock() {
+    if (_error != null) {
+      return _buildInfoCard('Инфо о сервере', _error!);
+    }
+
+    if (_apiInfo == null) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    return _buildInfoCard(
+      'Инфо о сервере',
+      'Сообщение: ${_apiInfo!.message}\n'
+          'Версия: ${_apiInfo!.version}\n'
+          'Swagger: ${_apiInfo!.swagger}',
     );
   }
 
@@ -92,7 +170,9 @@ class AboutScreen extends StatelessWidget {
   Widget _buildDescriptionCard() {
     return _buildInfoCard(
       'О приложении',
-      '5Place - это ваш персональный гид по интересным местам. Приложение поможет вам найти удивительные локации поблизости, сохранить понравившиеся места в избранное и построить к ним маршрут.',
+      '5Place - это ваш персональный гид по интересным местам. '
+          'Приложение поможет вам найти удивительные локации поблизости, '
+          'сохранить понравившиеся места в избранное и построить к ним маршрут.',
     );
   }
 
