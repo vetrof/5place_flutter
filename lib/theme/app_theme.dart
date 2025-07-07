@@ -24,6 +24,7 @@ class AppTheme {
   static Color get primaryColor => const Color(0xFF3366FF);
   static Color get backgroundColor => const Color(0xFFF7F7F7);
   static Color get cardColor => Colors.white;
+  static Color get cardIconColor => Colors.grey;
   static Color get textPrimary => const Color(0xFF1E1E1E);
   static Color get textSecondary => const Color(0xFF6B7280);
   static Color get accentColor => const Color(0xFF10B981); // зелёный акцент
