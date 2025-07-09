@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/app_theme.dart';
 import '../utils/constants.dart';
+import '../utils/login.dart';
 
 class ApiInfo {
   final String message;
@@ -34,10 +36,23 @@ class _AboutScreenState extends State<AboutScreen> {
   ApiInfo? _apiInfo;
   String? _error;
 
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  String? _loginError;
+  bool _isLoadingLogin = false;
+
   @override
   void initState() {
     super.initState();
     _fetchApiInfo();
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchApiInfo() async {
@@ -58,6 +73,34 @@ class _AboutScreenState extends State<AboutScreen> {
     } catch (e) {
       setState(() {
         _error = 'Ошибка запроса: $e';
+      });
+    }
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoadingLogin = true;
+      _loginError = null;
+    });
+
+    final token = await AuthService.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+
+    setState(() {
+      _isLoadingLogin = false;
+    });
+
+    if (token != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Успешный вход! Токен сохранён.')),
+      );
+    } else {
+      setState(() {
+        _loginError = 'Ошибка входа. Проверьте email и пароль.';
       });
     }
   }
@@ -93,6 +136,8 @@ class _AboutScreenState extends State<AboutScreen> {
             _buildFeaturesCard(),
             SizedBox(height: 20),
             _buildContactCard(),
+            SizedBox(height: 20),
+            _buildLoginForm(), // 🔥 Добавили форму логина
           ],
         ),
       ),
@@ -205,6 +250,63 @@ class _AboutScreenState extends State<AboutScreen> {
     return _buildInfoCard(
       'Контакты',
       'Email: ${AppConstants.supportEmail}\nСайт: ${AppConstants.website}',
+    );
+  }
+
+  Widget _buildLoginForm() {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: _cardDecoration(),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Войти',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: _emailController,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) =>
+              value == null || value.isEmpty ? 'Введите email' : null,
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Пароль',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) =>
+              value == null || value.isEmpty ? 'Введите пароль' : null,
+            ),
+            SizedBox(height: 16),
+            if (_loginError != null)
+              Text(
+                _loginError!,
+                style: TextStyle(color: Colors.red),
+              ),
+            SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: _isLoadingLogin ? null : _handleLogin,
+              child: _isLoadingLogin
+                  ? SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text('Войти'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -14,4 +14,9 @@ class AppConstants {
   // Контактная информация
   static const String supportEmail = 'support@5place.app';
   static const String website = 'www.5place.app';
+
+  static const String login = 'testuser';
+  static const String password = 'password123';
+
+  static const String jwtToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ1c2VybmFtZSI6InRlc3R1c2VyIiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiZXhwIjoxNzUyMTY4NDA1LCJpYXQiOjE3NTIwODIwMDV9.LsGFu_PIKT4ZgSswukRK5rAOBxJvId-sxIu6WA1N0ps';
 }

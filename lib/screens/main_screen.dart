@@ -30,8 +30,9 @@ class _MainScreenState extends State<MainScreen> {
   // final означает, что этот список нельзя изменить после создания
   final List<Widget> _screens = [
     PlacesListScreen(),    // Экран 0 - Главная страница
-    FavoritesScreen(),     // Экран 1 - Избранное
+    FavoritePlacesListScreen(),     // Экран 1 - Избранное
     HistoryScreen(),       // Экран 2 - История
+    FavoritePlacesListScreen(),         // Экран 3 - О приложении
     AboutScreen(),         // Экран 3 - О приложении
   ];
 
