@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart'; // 🔥 обязательно для Factory
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import '../utils/constants.dart';
+
 
 class GoogleMapWidget extends StatelessWidget {
   final GoogleMapController? mapController;
@@ -40,13 +43,20 @@ class GoogleMapWidget extends StatelessWidget {
             target: currentPosition != null
                 ? LatLng(currentPosition!.latitude, currentPosition!.longitude)
                 : LatLng(AppConstants.defaultLat, AppConstants.defaultLng),
-            zoom: 12,
+            zoom: 14,
           ),
           markers: markers,
           myLocationEnabled: true,
           myLocationButtonEnabled: false,
           compassEnabled: true,
           mapToolbarEnabled: false,
+
+          // 💥 Ключевая строка:
+          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+            Factory<OneSequenceGestureRecognizer>(
+                  () => EagerGestureRecognizer(),
+            ),
+          },
         ),
       ),
     );

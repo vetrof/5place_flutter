@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/place.dart';
 import '../../theme/app_theme.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 class PlaceDetailScreen extends StatelessWidget {
   final Place place;
@@ -39,7 +41,7 @@ class PlaceDetailScreen extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         Image.network(
-          place.photo.isNotEmpty ? place.photo[0] : 'https://via.placeholder.com/400x300',
+          place.photos.isNotEmpty ? place.photos[0] : 'https://via.placeholder.com/400x300',
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             return Container(
@@ -69,7 +71,7 @@ class PlaceDetailScreen extends StatelessWidget {
             ),
           ),
         ),
-        if (place.photo.length > 1)
+        if (place.photos.length > 1)
           Positioned(
             top: 50,
             right: 16,
@@ -85,7 +87,7 @@ class PlaceDetailScreen extends StatelessWidget {
                   Icon(Icons.photo_library, size: 16, color: Colors.white),
                   SizedBox(width: 4),
                   Text(
-                    '1/${place.photo.length}',
+                    '1/${place.photos.length}',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -120,7 +122,7 @@ class PlaceDetailScreen extends StatelessWidget {
               Icon(Icons.location_on, size: 20, color: AppTheme.primaryColor),
               SizedBox(width: 4),
               Text(
-                '${place.distance.toStringAsFixed(1)} км от вас',
+                '${place.distance.toStringAsFixed(1)} м от вас',
                 style: TextStyle(
                   fontSize: 16,
                   color: AppTheme.textSecondary,
@@ -248,16 +250,20 @@ class PlaceDetailScreen extends StatelessWidget {
     );
   }
 
-  void _openRoute(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Открытие карт для построения маршрута...'),
-        backgroundColor: AppTheme.primaryColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+  void _openRoute(BuildContext context) async {
+    final lat = place.lat;
+    final lng = place.lng;
+    final url = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Не удалось открыть карты'),
+          backgroundColor: AppTheme.primaryColor,
         ),
-      ),
-    );
+      );
+    }
   }
 }
