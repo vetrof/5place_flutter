@@ -9,10 +9,16 @@ class PlacesApiService {
     print('[DEBUG] PlacesApiService.getNearbyPlaces вызван');
 
     try {
+      final token = await AuthService.getToken();
       final url = Uri.parse('${AppConstants.apiBaseUrl}/api/v1/place/near?lat=$lat&long=$lng');
       print('[DEBUG] URL запроса: $url');
 
-      final response = await http.get(url);
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token', // токен из константы
+        },
+      );
 
       print('[DEBUG] Ответ получен: ${response.statusCode}');
       print('[DEBUG] Тело ответа: ${response.body}');
@@ -78,6 +84,28 @@ class PlacesApiService {
     } catch (e) {
       print('[ERROR] Ошибка загрузки мест: $e');
       return [];
+    }
+  }
+
+  static Future<bool> toggleFavorite(int placeId, bool isCurrentlyFavorite) async {
+    try {
+      final token = await AuthService.getToken();
+      final url = Uri.parse('${AppConstants.apiBaseUrl}/api/v1/place/favorite/$placeId');
+
+      final response = isCurrentlyFavorite
+          ? await http.delete(url, headers: {
+        'Authorization': 'Bearer $token',
+      })
+          : await http.post(url, headers: {
+        'Authorization': 'Bearer $token',
+      });
+
+      print('[DEBUG] toggleFavorite ${isCurrentlyFavorite ? 'DELETE' : 'POST'} → ${response.statusCode}');
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('[ERROR] toggleFavorite error: $e');
+      return false;
     }
   }
 }

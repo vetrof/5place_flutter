@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import '../models/place.dart';
 import '../theme/app_theme.dart';
+import '../services/places_api_service.dart';
 
 // Виджет (компонент) карточки места, который можно переиспользовать
 class PlaceCard extends StatefulWidget {
@@ -24,7 +25,15 @@ class PlaceCard extends StatefulWidget {
 
 // Внутреннее состояние карточки
 class _PlaceCardState extends State<PlaceCard> {
-  bool isFavorite = false; // Переменная для хранения, в "избранном" ли карточка
+  late bool isFavorite; // Переменная для хранения, в "избранном" ли карточка
+
+  @override
+  void initState() {
+    super.initState();
+    isFavorite = widget.place.isFavorite; // 🔧 берём начальное значение из place
+
+    print('[PlaceCard INIT] ${widget.place.name} → isFavorite: ${widget.place.isFavorite}');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,15 +149,21 @@ class _PlaceCardState extends State<PlaceCard> {
 
                       // Правая часть: иконка "избранное"
                       IconButton(
-                        onPressed: () {
-                          // При нажатии — инвертируем состояние избранного
-                          setState(() {
-                            isFavorite = !isFavorite;
-                          });
+                        onPressed: () async {
+                          final success = await PlacesApiService.toggleFavorite(widget.place.id, isFavorite);
+                          if (success) {
+                            setState(() {
+                              isFavorite = !isFavorite;
+                            });
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Ошибка при обновлении избранного')),
+                            );
+                          }
                         },
                         icon: Icon(
                           isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: AppTheme.cardIconColor,
+                          color: isFavorite ? Colors.red : AppTheme.cardIconColor,
                         ),
                       ),
                     ],

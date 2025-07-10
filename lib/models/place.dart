@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 /// Класс для представления места/достопримечательности
 class Place {
   // Уникальный идентификатор места
@@ -36,6 +38,8 @@ class Place {
   // Валюта для цены (например, "RUB", "USD", "EUR")
   final String currency;
 
+  final bool isFavorite;
+
   /// Конструктор класса Place
   /// Все поля обязательны, кроме price (может быть null)
   Place({
@@ -51,6 +55,7 @@ class Place {
     required this.type,
     required this.price,
     required this.currency,
+    required this.isFavorite,
   });
 
   /// Фабричный метод для создания объекта Place из JSON
@@ -103,6 +108,7 @@ class Place {
       // Если price существует, преобразуем в double, иначе оставляем null
       price: json['price'] != null ? (json['price'] as num).toDouble() : null,
       currency: json['currency'] ?? '',
+      isFavorite: json['isFavorite'] ?? false,
     );
 
     // Отладочное сообщение для проверки созданного объекта
