@@ -12,11 +12,13 @@ class PlaceCard extends StatefulWidget {
   final Place place; // Данные конкретного места
   final VoidCallback onPressed; // Действие при нажатии на карточку
 
+
   // Конструктор карточки, принимающий данные места и обработчик нажатия
   const PlaceCard({
     Key? key,
     required this.place,
     required this.onPressed,
+
   }) : super(key: key);
 
   @override

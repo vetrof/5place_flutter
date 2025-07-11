@@ -36,6 +36,10 @@ class _PlacesListScreenState extends State<PlacesListScreen> {
   // Набор маркеров для отображения на карте
   Set<Marker> _markers = {};
 
+  Set<String> _favoritePlaceIds = {}; // После других переменных
+
+
+
   /// Метод вызывается один раз при создании виджета
   /// Здесь инициализируем начальные данные
   @override
