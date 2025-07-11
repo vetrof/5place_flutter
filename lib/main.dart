@@ -1,14 +1,11 @@
+import 'package:five_place_app/theme.dart';
 import 'package:flutter/material.dart';
 import 'screens/main_screen.dart';
-import 'theme/app_theme.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-
-  print('API_BASE_URL: ${dotenv.env['API_BASE_URL']}');
-
   runApp(FivePlaceApp());
 }
 
