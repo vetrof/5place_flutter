@@ -1,8 +1,9 @@
-// screens/home_tab.dart
-import 'package:five_place_app/screens/place_detail_screen.dart';
 import 'package:flutter/material.dart';
+import '../cervice/place_api_cervice.dart';
 import '../models/place.dart';
 import '../widgets/place_card.dart';
+import 'place_detail_screen.dart';
+
 
 class HomeTab extends StatefulWidget {
   @override
@@ -10,17 +11,56 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  List<Place> places = Place.testPlaces; // Пока используем тестовые данные
+  List<Place> places = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadPlacesFromServer();
+  }
+
+  Future<void> loadPlacesFromServer() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // 👇 Поставь реальные координаты, если есть
+    final lat = 51.16203;
+    final lng = 71.40877;
+
+    final loadedPlaces = await PlacesApiService.getNearbyPlaces(lat, lng);
+
+    setState(() {
+      places = loadedPlaces;
+      isLoading = false;
+    });
+  }
+
+  Future<void> refreshPlaces() async {
+    await loadPlacesFromServer();
+  }
+
+  void toggleFavorite(Place place) async {
+    final success = await PlacesApiService.toggleFavorite(place.id, place.isFavorite);
+
+    if (success) {
+      setState(() {
+        place.isFavorite = !place.isFavorite;
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка при обновлении избранного')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Ближайшие места'),
-      ),
       body: Column(
         children: [
-          // Место для карты (пока просто заглушка)
+          // Карта-заглушка
           Container(
             height: 200,
             color: Colors.grey[300],
@@ -32,25 +72,30 @@ class _HomeTabState extends State<HomeTab> {
               ),
             ),
           ),
-
-          // Список мест
+          // Список карточек с pull-to-refresh
           Expanded(
-            child: ListView.builder(
-              itemCount: places.length,
-              itemBuilder: (context, index) {
-                return PlaceCard(
-                  place: places[index],
-                  onTap: () {
-                    // Переход к деталям места
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PlaceDetailScreen(place: places[index]),
-                      ),
-                    );
-                  },
-                );
-              },
+            child: isLoading
+                ? Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+              onRefresh: refreshPlaces,
+              child: ListView.builder(
+                itemCount: places.length,
+                itemBuilder: (context, index) {
+                  final place = places[index];
+                  return PlaceCard(
+                    place: place,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PlaceDetailScreen(place: place),
+                        ),
+                      );
+                    },
+                    onToggleFavorite: () => toggleFavorite(place),
+                  );
+                },
+              ),
             ),
           ),
         ],
